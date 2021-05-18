@@ -1,19 +1,18 @@
 import Algorithmia
-import tensorflow.keras.backend as K
-from tensorflow import convert_to_tensor
 import tensorflow as tf
-import numpy as np
+import re
+from .ScaledTransformer import Transformer
+from .BeamPredictor import Prediction
 
 """
 Example Input:
 {
-    "matrix_a": [[0, 1], [1, 0]],
-    "matrix_b": [[25, 25], [11, 11]]
+    "reaction": SMILES
 }
 
 Expected Output:
 {
-    "product": [[11, 11], [25, 25]]
+    "product": SMILES
 }
 """
 
@@ -29,7 +28,7 @@ print(tf.test.gpu_device_name())
 # Configure Tensorflow to only use up to 30% of the GPU.
 gpus = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(gpus[0], True)
-tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=3432)])
+tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=5720)])
 
 
 class InputObject:
@@ -37,45 +36,44 @@ class InputObject:
         """
         Creates an instance of the InputObject, which checks the format of data and throws exceptions if anything is
         missing.
-        "matrix_a" and "matrix_b" must be the same shape.
-
-        :param A - Matrix A, converted from a json list into a keras Tensor.
-        :param B - Matrix B, converted from a json list into a keras Tensor.
         """
         if isinstance(input_dict, dict):
-            if {'matrix_a', 'matrix_b'} <= input_dict.keys():
-                self.A = convert(input_dict['matrix_a'])
-                self.B = convert(input_dict['matrix_b'])
-            else:
-                raise Exception("'matrix_a' and 'matrix_b' must be defined.")
+            if not input_dict['reaction']:
+                raise Exception("Empty Reaction")
+            elif not isinstance(input_dict['reaction'], str):
+                raise Exception("Not a String!")
         else:
             raise Exception('input must be a json object.')
-        if self.A.shape[-1] != self.B.shape[0]:
-            raise Exception('inner dimensions between A and B must be the same.\n A: {} B: {}'.format(self.A.shape[-1],
-                                                                                                      self.B.shape[0]))
-
-
-def convert(list_array):
-    """
-    Converts a json list into a keras Tensor object.
-    """
-    numpy_object = np.asarray(list_array, dtype=np.float)
-    tensor_object = convert_to_tensor(numpy_object)
-    return tensor_object
+        self.reaction = input_dict['reaction']
 
 
 def apply(input):
     """
-    Calculates the dot product of two matricies using keras, with a tensorflow-gpu backend.
+    Predict Products of the Reaction (SMILES Notation)
     Returns the product as the output.
     """
 
     input = InputObject(input)
 
-    z = K.dot(input.A, input.B)
-    # Here you need to use K.eval() instead of z.eval() because this uses the backend session
-    K.eval(z)
-    z = K.get_value(z)
-    output = {'product': z.tolist()}
+    num_layers = 4
+    d_model = 256
+    num_heads = 8
+    dff = 1024
+    vocab_size = 193
+    pe_input = 130
+    pe_target = 80
+    rate = 0.1
+
+    # Model Loading
+    model = Transformer(num_layers, d_model, num_heads, dff, vocab_size, pe_input, pe_target, rate)
+    checkpoint_path = 'data://Dmitry_BV/TFModel/tf_MIT400K_mixed.h5'
+    model.load_weights(checkpoint_path)
+    tokenizer = re.compile(
+        r'(\[[^\]]+]|Br?|Cl?|N|O|S|P|F|I|b|c|n|o|s|se?|p|\(|\)|\.|=|#|'
+        r'-|\+|\\\\|\/|:|~|@|\?|>|>>|\*|\$|\%[0-9]{2}|[0-9])'
+    )
+    pred = Prediction(model, tokenizer, max_reg=pe_input, max_prod=pe_target, beam_size=1, reduce=False)
+    answers = pred.prediction(input.reaction)
+    output = {'product': answers}
     return output
 
