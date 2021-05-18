@@ -65,11 +65,11 @@ def apply(input):
     rate = 0.1
 
     # Creating Weights Object
-    client = Algorithmia.client('simtds2YG9Ed/wd5xucmvHy+U8G1')
+    client = Algorithmia.client()
     weights = client.file('data://.my/TFModel/tf_MIT400K_mixed.h5')
     # Model Loading
     model = Transformer(num_layers, d_model, num_heads, dff, vocab_size, pe_input, pe_target, rate)
-    model.load_weights(weights.path)
+    model.load_weights(weights.getFile())
     tokenizer = re.compile(
         r'(\[[^\]]+]|Br?|Cl?|N|O|S|P|F|I|b|c|n|o|s|se?|p|\(|\)|\.|=|#|'
         r'-|\+|\\\\|\/|:|~|@|\?|>|>>|\*|\$|\%[0-9]{2}|[0-9])'
