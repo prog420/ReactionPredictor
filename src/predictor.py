@@ -76,6 +76,7 @@ def apply(input):
     # Here you need to use K.eval() instead of z.eval() because this uses the backend session
     K.eval(z)
     z = K.get_value(z)
-    output = {'product': z.tolist()}
+    #output = {'product': z.tolist()}
+    output = 'product': z.tolist()
     return output
 
