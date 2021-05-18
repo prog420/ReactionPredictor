@@ -77,6 +77,6 @@ def apply(input):
     K.eval(z)
     z = K.get_value(z)
     #output = {'product': z.tolist()}
-    output = 'product': z.tolist()
+    output = z.tolist()
     return output
 
