@@ -66,7 +66,7 @@ def apply(input):
 
     # Model Loading
     model = Transformer(num_layers, d_model, num_heads, dff, vocab_size, pe_input, pe_target, rate)
-    checkpoint_path = 'data://Dmitry_BV/TFModel/tf_MIT400K_mixed.h5'
+    checkpoint_path = 'data://.my/TFModel/tf_MIT400K_mixed.h5'
     model.load_weights(checkpoint_path)
     tokenizer = re.compile(
         r'(\[[^\]]+]|Br?|Cl?|N|O|S|P|F|I|b|c|n|o|s|se?|p|\(|\)|\.|=|#|'
