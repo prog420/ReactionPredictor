@@ -65,7 +65,7 @@ def apply(input):
     rate = 0.1
 
     # Creating Weights Object
-    client = Algorithmia.client()
+    client = Algorithmia.client('simtds2YG9Ed/wd5xucmvHy+U8G1')
     weights = client.file('data://.my/TFModel/tf_MIT400K_mixed.h5')
     # Model Loading
     model = Transformer(num_layers, d_model, num_heads, dff, vocab_size, pe_input, pe_target, rate)
