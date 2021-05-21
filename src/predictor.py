@@ -42,9 +42,12 @@ class InputObject:
                 raise Exception("Empty Reaction")
             elif not isinstance(input_dict['reaction'], str):
                 raise Exception("Not a String!")
+            elif not isinstance(input_dict['beamWidth'], int):
+                raise Exception("Not an Number!")
         else:
             raise Exception('input must be a json object.')
         self.reaction = input_dict['reaction']
+        self.beam_width = input_dict['beamWidth']
 
 
 def apply(input):
@@ -74,7 +77,8 @@ def apply(input):
         r'(\[[^\]]+]|Br?|Cl?|N|O|S|P|F|I|b|c|n|o|s|se?|p|\(|\)|\.|=|#|'
         r'-|\+|\\\\|\/|:|~|@|\?|>|>>|\*|\$|\%[0-9]{2}|[0-9])'
     )
-    pred = Prediction(model, tokenizer, max_reg=pe_input, max_prod=pe_target, beam_size=1, reduce=False)
+    pred = Prediction(model, tokenizer, max_reg=pe_input, max_prod=pe_target,
+                      beam_size=input.beam_width, reduce=False)
     answers = pred.prediction(input.reaction)
     output = {'product': answers}
     return output
