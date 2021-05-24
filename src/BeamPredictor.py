@@ -15,6 +15,8 @@ class Prediction:
         self.smiles_tokenizer = tokenizer
 
         self.inv_vocab = {v: k for k, v in self.vocab.items()}
+        self.EOS_ind = [ind for ind, t in self.inv_vocab.items() if t == 'pad'][0]
+        self.SOS_ind = [ind for ind, t in self.inv_vocab.items() if t == 'SOS'][0]
         self.data = list()
         self.num_values = {}
         for ind, tok in self.inv_vocab.items():
@@ -103,8 +105,6 @@ class Prediction:
 
     def beam_pred(self, data, k):
         vocab_size = len(self.inv_vocab)
-        self.EOS_ind = [ind for ind, t in self.inv_vocab.items() if t == 'pad'][0]
-        self.SOS_ind = [ind for ind, t in self.inv_vocab.items() if t == 'SOS'][0]
 
         inputs, out = data
         enc_inp, dec_inp = inputs
